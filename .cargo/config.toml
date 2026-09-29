@@ -1,0 +1,9 @@
+[unstable]
+build-std = ["std", "panic_abort"]
+panic-immediate-abort = true
+
+[profile.release]
+panic = "immediate-abort"
+
+[build]
+target = "wasm32-unknown-unknown"
