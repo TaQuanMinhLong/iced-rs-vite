@@ -13,7 +13,7 @@ cargo install wasm-pack
 
 ## Project layout
 
-The Rust crate lives _inside_ the Vite project, and `wasm-pack` writes its output into `src/`:
+The Rust crate lives _inside_ the Vite project, and `wasm-pack` writes its output into `build/`:
 
 ```text
 my-app/
@@ -24,14 +24,12 @@ my-app/
 │   ├── Cargo.toml
 │   └── src/
 │       └── lib.rs
-└── src/
-    ├── main.js
-    └── wasm/            ← generated, do not edit
-        ├── my_iced_app.js
-        └── my_iced_app_bg.wasm
+└── build/               ← generated, do not edit
+    ├── my_iced_app.js
+    └── my_iced_app_bg.wasm
 ```
 
-`wasm-pack` writes a `.gitignore` containing `*` into its output directory, so `src/wasm` is already excluded. Add it to your own `.gitignore` too if you would rather not depend on that.
+`build/` is the plugin's default `outDir`, and it does not collide with Vite's own `dist/` bundle. `wasm-pack` writes a `.gitignore` containing `*` into its output directory, so `build/` is already excluded. Add it to your own `.gitignore` too if you would rather not depend on that.
 
 Scaffold the front end with `bun`:
 
@@ -213,8 +211,8 @@ export default defineConfig({
 ```json
 {
   "scripts": {
-    "wasm": "wasm-pack build crate --target web --out-dir ../src/wasm --dev",
-    "wasm:release": "wasm-pack build crate --target web --out-dir ../src/wasm --release",
+    "wasm": "wasm-pack build crate --target web --out-dir ../build --dev",
+    "wasm:release": "wasm-pack build crate --target web --out-dir ../build --release",
     "dev": "bun run wasm && vite",
     "build": "bun run wasm:release && vite build",
     "preview": "vite preview"
@@ -252,11 +250,11 @@ cargo install cargo-watch
 cargo watch -w crate/src -s "bun run wasm"
 ```
 
-Run it alongside `bun run dev`. When `src/wasm` changes, the page reloads.
+Run it alongside `bun run dev`. When `build` changes, the page reloads.
 
 ### Doing it in one process with a plugin
 
-A Vite plugin can own the whole loop — build on startup, watch the Rust sources, rebuild, and trigger the reload itself — so no second terminal and no `cargo-watch` install. This is what [`vite-plugin-wasm-pack`](https://www.npmjs.com/package/vite-plugin-wasm-pack) does.
+A Vite plugin can own the whole loop — build on startup, watch the Rust sources, rebuild, and trigger the reload itself — so no second terminal and no `cargo-watch` install. This template ships one, `vite-plugin-wasm-pack` (see its README under `packages/` for options), which does all of that.
 
 `vite.config.js`:
 
@@ -268,9 +266,9 @@ export default defineConfig({
   plugins: [
     wasmPack({
       crate: "crate",
-      outDir: "src/wasm",
+      // Defaults worth knowing: `outDir` is `build`, `wasmPack.target` is
+      // `web`, and `outName` falls back to the crate name.
       wasmPack: {
-        target: "web",
         outName: "my_iced_app",
       },
     }),
@@ -309,19 +307,19 @@ A second `--target` and `-Z build-std=...` are **cargo** options. Passing them a
 error: the argument '--target <TARGET>' cannot be used multiple times
 ```
 
-So the plugin keeps them apart, and `cargo` is the only field that reaches past `--`:
+So the plugin keeps them apart. Everything under `cargo` reaches past `--`; everything under `wasmPack` stays in wasm-pack's own argument space:
 
 ```js
 wasmPack({
   crate: "crate",
   wasmPack: {
-    target: "web",
-    // wasm-pack's own flags
+    target: "web",      // wasm-pack's own flags
     scope: "@scope",
     noTypescript: false,
-
+  },
+  cargo: {
     // forwarded to `cargo build`, placed after `--`
-    cargo: ["--target", "wasm32-unknown-unknown", "-Z", "build-std=std,panic_abort"],
+    args: ["-Z", "build-std=std,panic_abort"],
   },
 });
 ```

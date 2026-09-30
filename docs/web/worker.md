@@ -388,8 +388,8 @@ Three things to note about that channel:
 ## Shipping it
 
 ```bash
-wasm-pack build crates/app   --target web --out-dir web/src/wasm
-wasm-pack build crates/engine --target web --out-dir web/src/wasm/engine
+wasm-pack build crates/app    --target web --out-dir web/build
+wasm-pack build crates/engine --target web --out-dir web/build/engine
 ```
 
 ```json

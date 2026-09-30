@@ -1,0 +1,85 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "main"
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!**/.nuxt", "!**/.output", "!**/.wrangler", "!**/.agents", "!**/*.{html,js,mjs,css,fml}"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120,
+    "expand": "auto",
+    "includes": ["**", "!**/*.vue"]
+  },
+  "linter": {
+    "includes": ["**", "!**/*.d.ts"],
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "noNonNullAssertion": "off",
+        "useVueMultiWordComponentNames": "off",
+        "useImportType": {
+          "level": "info",
+          "options": {
+            "style": "separatedType"
+          }
+        },
+        "useNodejsImportProtocol": {
+          "fix": "safe",
+          "level": "info"
+        }
+      },
+      "complexity": {
+        "noExtraBooleanCast": "off",
+        "noStaticOnlyClass": "off",
+        "useLiteralKeys": {
+          "fix": "safe",
+          "level": "info"
+        }
+      },
+      "suspicious": {
+        "noAssignInExpressions": "off",
+        "noUnknownAtRules": "off",
+        "noExplicitAny": "off",
+        "noTsIgnore": "off"
+      },
+      "nursery": {
+        "useSortedClasses": {
+          "level": "info",
+          "fix": "safe",
+          "options": {
+            "attributes": ["class"],
+            "functions": ["cn"]
+          }
+        }
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "identifierOrder": "lexicographic",
+            "groups": [{ "type": true }]
+          }
+        }
+      }
+    }
+  }
+}

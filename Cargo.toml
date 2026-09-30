@@ -3,23 +3,78 @@ name = "app"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# `native` is the default so that a bare `cargo build` or `cargo run` does the
+# obvious thing on a developer machine, with no flags to remember.
+#
+#   native (default) — the desktop build: `cargo run`
+#   wasm             — the web build, driven by `bun run dev`
+#
+# The web path never relies on this: the vite plugin passes
+# `--target wasm32-unknown-unknown` and `--features wasm` itself, so switching
+# the default only affects bare cargo commands.
+#
+# The entry points in src/ are `#[cfg]`-gated, so both features can be enabled
+# at once and still compile — but you rarely want to.
+default = ["native"]
+
+# Web: `wgpu` is the renderer, `webgl` its browser backend. There is no
+# windowing system here — winit is not involved at all.
+wasm = [
+    "iced/wgpu",
+    "iced/webgl",
+    "iced/web-colors",
+    "iced/crisp",
+    "iced/fira-sans",
+    "dep:wasm-bindgen",
+    "dep:console_error_panic_hook",
+    "dep:console_log",
+]
+
+# Native: a real renderer plus a windowing backend.
+native = [
+    "iced/tiny-skia",
+    "iced/wgpu",
+    "iced/x11",
+    "iced/wayland",
+    "iced/linux-theme-detection",
+    "iced/thread-pool",
+    "iced/web-colors",
+    "iced/crisp",
+    "iced/fira-sans",
+]
+
 [dependencies]
-iced = { version = "0.14", default-features = false, features = [
-    "wgpu",
-    "webgl",
-    "web-colors",
-    "crisp",
-    "fira-sans",
-] }
-wasm-bindgen = "0.2"
+# `default-features = false` keeps winit's desktop backends out of the web
+# build. Each target re-enables exactly what it needs via the features above.
+iced = { version = "0.14", default-features = false }
+# `console_log` and `console_error_panic_hook` forward to the browser console,
+# so they are web-only. A desktop build writes panics to stderr on its own.
+wasm-bindgen = { version = "0.2", optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
+console_log = { version = "1", optional = true }
+log = "0.4"
 
 [profile.dev]
 opt-level = 1
+strip = "debuginfo"
 
 [profile.dev.package."*"]
 opt-level = 3
 
 [profile.release]
 codegen-units = 1
+opt-level = 3
+
+[profile.wasm-release]
+inherits = "release"
 opt-level = "s"
 strip = "debuginfo"
+
+[profile.native-release]
+inherits = "release"
+lto = true
+strip = false
